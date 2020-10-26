@@ -1,6 +1,16 @@
 *For the glossary of terms, see the end of the document*
 
-# Inspiration/Problem
+## Setup
+
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+jupyter notebook
+```
+
+## Inspiration/Problem
 
 In the classical market maker models (such as a *constant product model*,  as used in Uniswap), the *slippage* for the trade A->B is proportional to the amount of A and B assets that exchange has reserved for this trading pair. 
 Unfortunately, current DEX designs are utilizing reserve assets in a suboptimal way:
@@ -8,7 +18,7 @@ Unfortunately, current DEX designs are utilizing reserve assets in a suboptimal 
 - [Bancor](bancor.network) uses a concept of a *target reserve ratio* for each token, what provides incentive for *arbitrageurs* to keep each token reserves close to the target values. Unfortunatelly, it lacks a mechanism of balancing these ratios, so they need to be set up manually and do not necessarily correspond to the actual volume on each of the assets (what in turn causes suboptimal slippage for traders). 
 - [Balancer](balancer.finance), contrary to the name, also does not have a rebalancing mechanism. Instead, it nicely merges the Bancor idea of *target reserve ratios* for each token (which are called *weights* within the Balancer model) with a generalized *constant product model* of Uniswap. In the current version the *target reserve ratios/weights* are assumed to be constant. 
 
-# What it does/Solution
+## What it does/Solution
 
 Common is a DEX model that automatically balances reserve ratios in order to minimize the average slippage over all trades. 
 The balancing is based purely on incentive mechanisms, hence does not rely on external price or volume oracles.
@@ -90,37 +100,37 @@ And using (1) we get:
 Assume now that there is a token i for which the ratio volume(i)/W_i is higher than for the other tokens. Then, for every market maker it is profitable to assign more votes to that token, and hence increase the fee earned. Q.E.D
 
 
-# How I built it
+## How I built it
 
 The generalized constant product model is based on Balancer, and  the balancing loop is my original idea.
 
 
-# Challenges I ran into
+## Challenges I ran into
 
 1. It occured to be quite hard to formalize a mechanism for listing new tokens within such a model
 2. As pointed out by Billy Rennekamp, DEX based on such mechanism itself would be susceptible to putting unreasonably high fraction of its reserves in highly traded tokens with very unstable price (AKA *shitcoins*), hence putting at risk market makers' capital. Due to this limitation, without further work the design should be rather used for a federated list of traded tokens. The issue can be partially alleviated by replacing logarithm in the price equations with a function with a horizontal asymptote (ex. 1/(1-f(x)) for any f descending to 0), so that even unbounded influx of a single type of token can't allow to buy the whole of the system reserves. Other proposed heuristics included shutting off the listed token after it reaches some 'danger threshold'.
 3. Relation between balances B_i and B_j and the slippage on the i,j trading pair is not trivial, and the concept of 'average slippage' is somewhat loosely defined (what is the average size of the trade? What is the distribution of the trade sizes?). It remains an open problem to me whether the equilibrium in which balances directly proportional to the traded volumes is the best possible in terms of slippage minimization.
 
-# Accomplishments that I'm proud of
+## Accomplishments that I'm proud of
 - the balancing feedback loop is surprisingly well formalized considering the time constraints
 - the specification chart (AKA 'differential specification') is a piece of art,
 - I've proven a theorem on a hackathon!
 
 
-# What I learned
+## What I learned
 - how to formalize incentive mechanisms with [differential specification](https://community.cadcad.org/t/differential-specification-syntax-key/31),
 - what is cadCAD and how to use it,
 - that constant product model easily generalizes for multiple tokens with different weights, and that someone actually already did the hard part of performing all the price calculations (thanks Michael Zargham for showing me Balancer),
 - that [volatility risk](https://en.wikipedia.org/wiki/Volatility_risk) should be taken into account when designing DEXes. 
 
-# What's next for Common
+## What's next for Common
 1. To alleviate the problem in challenge nr 2., another mechanism should to be put in place, which would hold voters for a given token X accountable for its excessive drops in price.
 
 2. The mechanism of listing new tokens should be formalized. **Important note:** without resolving issue 1., allowing for listing new tokens by users or market makers could lead to various exploits based on listing different shady assets (which are, for example, hacked in a way giving someone access to unlimited amounts of tokens).
 
 3. Of course, it needs to be implemented, preferably using some interoperability stack to allow for decentralized trading of non-ERC-20 tokens (ex., Bitcoin...). Currently it seems that such interoperability is possible either via deploying DEX on Ethereum and trustless wrapping of non-ERC-20 tokens (see ex., Keep [tBTC concept](http://docs.keep.network/tbtc/index.pdf), the same would need to be done for every other problematic token...), or by deploying on a platform with built-in decentralized bridges (ex., Cosmos hubs and zones or Polkadot bridge chains). 
 
-### Glossary of terms:
+## Glossary of terms:
 
 **DEX** - An exchange which operates in a decentralized way, i.e., without a central authority. 
 
